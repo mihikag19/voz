@@ -46,7 +46,8 @@ export function DoneScreen({ language, storeUrl, onStartOver }: DoneScreenProps)
   }
 
   const handleWhatsAppShare = () => {
-    const message = encodeURIComponent(`Check out my store: ${storeUrl}`)
+    const absoluteUrl = storeUrl?.startsWith("http") ? storeUrl : `${window.location.origin}${storeUrl}`
+    const message = encodeURIComponent(`Check out my store: ${absoluteUrl}`)
     window.open(`https://wa.me/?text=${message}`, "_blank")
   }
 
@@ -244,7 +245,7 @@ export function DoneScreen({ language, storeUrl, onStartOver }: DoneScreenProps)
         className="relative z-20 w-full max-w-md space-y-3 mt-6"
       >
         <Link
-          href="/store"
+          href={storeUrl || "/store"}
           className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-[var(--lavender-grey)] text-white font-serif text-lg italic hover:bg-[var(--lilac)] transition-colors relative overflow-hidden group"
         >
           <motion.div
