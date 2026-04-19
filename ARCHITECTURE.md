@@ -161,7 +161,7 @@ async function callASI1({ systemPrompt, userPrompt }) {
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      model: "asi1-mini",
+      model: "asi1",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt }
