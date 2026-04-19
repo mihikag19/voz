@@ -46,7 +46,7 @@ export function DoneScreen({ language, storeUrl, onStartOver }: DoneScreenProps)
   }
 
   const handleWhatsAppShare = () => {
-    const absoluteUrl = storeUrl?.startsWith("http") ? storeUrl : `${window.location.origin}${storeUrl}`
+    const absoluteUrl = `${window.location.origin}/storefront/priya-warli-painting`
     const message = encodeURIComponent(`Check out my store: ${absoluteUrl}`)
     window.open(`https://wa.me/?text=${message}`, "_blank")
   }
@@ -221,7 +221,7 @@ export function DoneScreen({ language, storeUrl, onStartOver }: DoneScreenProps)
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm text-muted-foreground mb-0.5">voz.store</p>
-              <p className="text-foreground font-medium truncate">{storeUrl.replace("https://", "")}</p>
+              <p className="text-foreground font-medium truncate">voz.store/storefront/priya-warli-painting</p>
             </div>
             <RippleButton
               onClick={handleCopy}
@@ -245,7 +245,7 @@ export function DoneScreen({ language, storeUrl, onStartOver }: DoneScreenProps)
         className="relative z-20 w-full max-w-md space-y-3 mt-6"
       >
         <Link
-          href={storeUrl || "/store"}
+          href="/storefront/priya-warli-painting"
           className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-[var(--lavender-grey)] text-white font-serif text-lg italic hover:bg-[var(--lilac)] transition-colors relative overflow-hidden group"
         >
           <motion.div
