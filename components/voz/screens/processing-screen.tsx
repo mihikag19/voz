@@ -97,6 +97,40 @@ const content = {
   },
 }
 
+async function compressImage(file: File): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file)
+    const img = document.createElement("img")
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      const maxWidth = 1920
+      const scale = img.width > maxWidth ? maxWidth / img.width : 1
+      const width = Math.round(img.width * scale)
+      const height = Math.round(img.height * scale)
+      const canvas = document.createElement("canvas")
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext("2d")
+      if (!ctx) return reject(new Error("canvas context unavailable"))
+      ctx.drawImage(img, 0, 0, width, height)
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) return reject(new Error("canvas.toBlob returned null"))
+          console.log(`Compressed ${file.name}: ${file.size} -> ${blob.size} bytes`)
+          resolve(blob)
+        },
+        "image/jpeg",
+        0.85
+      )
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error(`Failed to load image: ${file.name}`))
+    }
+    img.src = url
+  })
+}
+
 const streamingLogs = [
   "Initializing voice transcription pipeline...",
   "Loading Whisper model...",
@@ -357,10 +391,13 @@ export function ProcessingScreen({ language, products, voiceRecording, onComplet
 
     const callApi = async () => {
       try {
+        const compressedBlobs = await Promise.all(
+          productsRef.current.map(p => compressImage(p.file))
+        )
         const formData = new FormData()
-        for (const product of productsRef.current) {
-          formData.append("images", product.file)
-        }
+        productsRef.current.forEach((product, i) => {
+          formData.append("images", compressedBlobs[i], product.file.name)
+        })
         const blob = voiceRecordingRef.current.blob
         if (blob) {
           formData.append("audio", blob, "recording.webm")
