@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 export async function GET() {
   return NextResponse.json({
     slug: "priya-warli-painting",
-    storefront_url: "/storefront/priya-warli-painting",
+    storefront_url: "/store",
     image_url: "https://images.unsplash.com/photo-1578321272176-b7bbc0679853?w=800",
     image_urls: ["https://images.unsplash.com/photo-1578321272176-b7bbc0679853?w=800"],
     voice_transcript:
