@@ -40,13 +40,13 @@ export function DoneScreen({ language, storeUrl, onStartOver }: DoneScreenProps)
   const [copied, setCopied] = useState(false)
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(storeUrl)
+    await navigator.clipboard.writeText("https://voz-theta.vercel.app/storefront/priya-warli-painting")
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
 
   const handleWhatsAppShare = () => {
-    const absoluteUrl = `${window.location.origin}/storefront/priya-warli-painting`
+    const absoluteUrl = "https://voz-theta.vercel.app/storefront/priya-warli-painting"
     const message = encodeURIComponent(`Check out my store: ${absoluteUrl}`)
     window.open(`https://wa.me/?text=${message}`, "_blank")
   }
