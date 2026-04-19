@@ -4,6 +4,7 @@ import { transcribeAndTranslate } from "@/lib/whisper";
 import { runPipeline } from "@/lib/pipeline";
 
 export async function POST(request: NextRequest) {
+  const t0 = Date.now();
   // Stage 1: parse + validate
   let formData: FormData;
   try {
@@ -46,6 +47,8 @@ export async function POST(request: NextRequest) {
     transcribeAndTranslate(audio),
   ]);
 
+  console.log(`[process] upload+whisper: ${Date.now() - t0}ms`);
+
   if (uploadSettled.status === "rejected") {
     console.error("Upload threw", uploadSettled.reason);
     return NextResponse.json(
@@ -84,6 +87,7 @@ export async function POST(request: NextRequest) {
   let ethics: { status: string; issues: unknown[] };
   let mergedHtml: string;
 
+  const t1 = Date.now();
   try {
     ({ slug, listing, pricing, ethics, mergedHtml } = await runPipeline({
       photoUrl,
@@ -92,7 +96,7 @@ export async function POST(request: NextRequest) {
       detectedLanguage,
     }));
   } catch (e) {
-    console.error("Pipeline failed", e);
+    console.error(`[process] pipeline failed after ${Date.now() - t1}ms (total ${Date.now() - t0}ms):`, e);
     return NextResponse.json(
       {
         error: e instanceof Error ? e.message : "Pipeline failed",
@@ -101,6 +105,7 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+  console.log(`[process] pipeline: ${Date.now() - t1}ms (total: ${Date.now() - t0}ms)`);
 
   // Stage 5: save to Supabase
   const { error: insertError } = await supabaseAdmin.from("products").insert({
@@ -120,13 +125,14 @@ export async function POST(request: NextRequest) {
   });
 
   if (insertError) {
-    console.error("Supabase insert failed", insertError);
+    console.error(`[process] Supabase insert failed after ${Date.now() - t0}ms total:`, insertError);
     return NextResponse.json(
       { error: insertError.message, stage: "save" },
       { status: 500 }
     );
   }
 
+  console.log(`[process] done: ${Date.now() - t0}ms total`);
   // Stage 6: return response
   return NextResponse.json({
     slug,

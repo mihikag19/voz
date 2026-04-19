@@ -20,6 +20,6 @@ export async function runStorefrontAgent(transcript: string): Promise<string> {
   return callClaude({
     systemPrompt: SYSTEM_PROMPT,
     userContent: `TRANSCRIPT:\n${transcript}\n\nGenerate the HTML now.`,
-    maxTokens: 4096,
+    maxTokens: 2048,
   });
 }

@@ -387,7 +387,7 @@ export function ProcessingScreen({ language, products, voiceRecording, onComplet
     })
 
     // 25-second hard timeout — aborts the in-flight fetch to trigger demo fallback
-    const apiAbortTimer = setTimeout(() => controller.abort(), 25000)
+    const apiAbortTimer = setTimeout(() => controller.abort(), 55000)
 
     const callApi = async () => {
       try {
