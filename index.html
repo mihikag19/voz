@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Voz</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #FAF7F2;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 24px 16px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 480px;
+    }
+
+    .screen {
+      display: none;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    /* Upload Screen */
+    #upload-screen .heading {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    #upload-screen .heading h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #1a1a1a;
+    }
+
+    #upload-screen .heading p {
+      font-size: 1rem;
+      color: #6b6b6b;
+      margin-top: 6px;
+    }
+
+    /* Processing Screen */
+    #processing-screen {
+      text-align: center;
+      padding: 48px 0;
+    }
+
+    #processing-screen h2 {
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 12px;
+    }
+
+    #processing-screen p {
+      color: #6b6b6b;
+      font-size: 0.95rem;
+    }
+
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid #e5e0d8;
+      border-top-color: #1a1a1a;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 24px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Done Screen */
+    #done-screen {
+      text-align: center;
+      padding: 48px 0;
+    }
+
+    #done-screen h2 {
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 12px;
+    }
+
+    #done-screen p {
+      color: #6b6b6b;
+      font-size: 0.95rem;
+    }
+
+    .checkmark {
+      width: 56px;
+      height: 56px;
+      background: #1a1a1a;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+    }
+
+    .checkmark svg {
+      width: 28px;
+      height: 28px;
+      stroke: #FAF7F2;
+      fill: none;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* Dev nav for testing */
+    .dev-nav {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      justify-content: center;
+    }
+
+    .dev-nav button {
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background: #fff;
+      cursor: pointer;
+      color: #555;
+    }
+
+    .dev-nav button:hover {
+      background: #f0ece4;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+
+    <!-- Dev nav for testing screens -->
+    <nav class="dev-nav">
+      <button onclick="showScreen('upload-screen')">Upload</button>
+      <button onclick="showScreen('processing-screen')">Processing</button>
+      <button onclick="showScreen('done-screen')">Done</button>
+    </nav>
+
+    <!-- Upload Screen -->
+    <section id="upload-screen" class="screen active">
+
+      <!-- 1. Header -->
+      <div style="text-align:center; margin-bottom:32px;">
+        <h1 style="font-size:2.5rem; font-weight:800; letter-spacing:-0.5px; color:#1a1a1a;">Voz</h1>
+        <p style="font-size:1rem; color:#6b6b6b; margin-top:6px;">Your store, in your voice</p>
+      </div>
+
+      <!-- 2. Photo upload zone -->
+      <div id="photo-zone"
+        onclick="document.getElementById('photo-input').click()"
+        style="
+          border: 2px dashed #c5bfb4;
+          border-radius: 16px;
+          min-height: 180px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          margin-bottom: 28px;
+          overflow: hidden;
+          position: relative;
+          background: #fff;
+          transition: border-color 0.2s;
+        ">
+        <div id="photo-placeholder" style="display:flex; flex-direction:column; align-items:center; gap:10px; padding:24px;">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="3"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
+          </svg>
+          <span style="font-size:0.9rem; color:#999; text-align:center;">Tap to add a photo of your product</span>
+        </div>
+        <img id="photo-preview" src="" alt="preview"
+          style="display:none; width:100%; height:200px; object-fit:cover;" />
+        <input id="photo-input" type="file" accept="image/*" style="display:none;" onchange="handlePhoto(this)" />
+      </div>
+
+      <!-- 3. Record button -->
+      <div style="display:flex; flex-direction:column; align-items:center; gap:16px; margin-bottom:28px;">
+        <button id="record-btn"
+          onclick="toggleRecording()"
+          style="
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: none;
+            background: #1a1a1a;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s, transform 0.1s;
+            flex-shrink: 0;
+          ">
+          <!-- Mic icon -->
+          <svg id="record-icon" width="32" height="32" viewBox="0 0 24 24" fill="none"
+            stroke="#FAF7F2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="2" width="6" height="12" rx="3"/>
+            <path d="M5 10a7 7 0 0 0 14 0"/>
+            <line x1="12" y1="19" x2="12" y2="22"/>
+            <line x1="8" y1="22" x2="16" y2="22"/>
+          </svg>
+          <!-- Stop icon (hidden by default) -->
+          <svg id="stop-icon" width="28" height="28" viewBox="0 0 24 24" fill="#FAF7F2"
+            style="display:none;">
+            <rect x="4" y="4" width="16" height="16" rx="3"/>
+          </svg>
+        </button>
+
+        <span id="record-timer" style="font-size:1.1rem; font-weight:600; color:#1a1a1a; font-variant-numeric:tabular-nums; display:none;">00:00</span>
+        <span id="record-hint" style="font-size:0.85rem; color:#999;">Tap to record your pitch</span>
+
+        <!-- Audio playback bar -->
+        <div id="audio-bar"
+          style="
+            display: none;
+            align-items: center;
+            gap: 10px;
+            background: #fff;
+            border: 1px solid #e5e0d8;
+            border-radius: 12px;
+            padding: 10px 16px;
+            width: 100%;
+          ">
+          <button onclick="togglePlayback()"
+            style="
+              width: 36px; height: 36px;
+              border-radius: 50%;
+              border: none;
+              background: #1a1a1a;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              flex-shrink: 0;
+            ">
+            <svg id="play-icon" width="16" height="16" viewBox="0 0 24 24" fill="#FAF7F2">
+              <polygon points="5,3 19,12 5,21"/>
+            </svg>
+            <svg id="pause-icon" width="16" height="16" viewBox="0 0 24 24" fill="#FAF7F2" style="display:none;">
+              <rect x="6" y="4" width="4" height="16" rx="1"/>
+              <rect x="14" y="4" width="4" height="16" rx="1"/>
+            </svg>
+          </button>
+          <div style="flex:1; height:4px; background:#e5e0d8; border-radius:2px; overflow:hidden;">
+            <div id="playback-progress" style="height:100%; background:#1a1a1a; width:0%; transition:width 0.1s linear;"></div>
+          </div>
+          <span id="playback-time" style="font-size:0.8rem; color:#999; white-space:nowrap; font-variant-numeric:tabular-nums;">0:00</span>
+        </div>
+      </div>
+
+      <!-- 4. Create My Store button -->
+      <button id="create-btn"
+        disabled
+        onclick="handleCreate()"
+        style="
+          width: 100%;
+          padding: 16px;
+          border: none;
+          border-radius: 14px;
+          font-size: 1rem;
+          font-weight: 700;
+          cursor: not-allowed;
+          background: #d6d0c8;
+          color: #fff;
+          transition: background 0.2s, transform 0.1s;
+          letter-spacing: 0.01em;
+        ">
+        Create My Store
+      </button>
+
+    </section>
+
+    <!-- Processing Screen -->
+    <section id="processing-screen" class="screen">
+      <div class="spinner"></div>
+      <h2>Processing…</h2>
+      <p>This will only take a moment.</p>
+    </section>
+
+    <!-- Done Screen -->
+    <section id="done-screen" class="screen">
+      <div class="checkmark">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h2>All done!</h2>
+      <p>Your store is ready.</p>
+    </section>
+
+  </div>
+
+  <script>
+    // ── Screen nav ──────────────────────────────────────────────
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    // ── State ────────────────────────────────────────────────────
+    let hasPhoto = false;
+    let hasRecording = false;
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let audioBlob = null;
+    let audioUrl = null;
+    let audioEl = null;
+    let timerInterval = null;
+    let timerSeconds = 0;
+    let playbackInterval = null;
+
+    // ── Photo ────────────────────────────────────────────────────
+    function handlePhoto(input) {
+      const file = input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        const zone = document.getElementById('photo-zone');
+        const placeholder = document.getElementById('photo-placeholder');
+        const preview = document.getElementById('photo-preview');
+        placeholder.style.display = 'none';
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+        zone.style.border = '2px solid #1a1a1a';
+        hasPhoto = true;
+        updateCreateBtn();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // ── Recording ────────────────────────────────────────────────
+    async function toggleRecording() {
+      if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+        await startRecording();
+      } else {
+        stopRecording();
+      }
+    }
+
+    async function startRecording() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioChunks = [];
+
+        const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '';
+        mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
+
+        mediaRecorder.ondataavailable = e => {
+          if (e.data.size > 0) audioChunks.push(e.data);
+        };
+
+        mediaRecorder.onstop = () => {
+          stream.getTracks().forEach(t => t.stop());
+          audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+          audioUrl = URL.createObjectURL(audioBlob);
+          audioEl = new Audio(audioUrl);
+          audioEl.ontimeupdate = updatePlaybackProgress;
+          audioEl.onended = onPlaybackEnded;
+          showAudioBar();
+          hasRecording = true;
+          updateCreateBtn();
+        };
+
+        mediaRecorder.start();
+        setRecordingUI(true);
+        startTimer();
+      } catch (err) {
+        alert('Microphone access denied. Please allow microphone access and try again.');
+      }
+    }
+
+    function stopRecording() {
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+      }
+      stopTimer();
+      setRecordingUI(false);
+    }
+
+    function setRecordingUI(recording) {
+      const btn = document.getElementById('record-btn');
+      const micIcon = document.getElementById('record-icon');
+      const stopIcon = document.getElementById('stop-icon');
+      const timer = document.getElementById('record-timer');
+      const hint = document.getElementById('record-hint');
+
+      if (recording) {
+        btn.style.background = '#e53e3e';
+        micIcon.style.display = 'none';
+        stopIcon.style.display = 'block';
+        timer.style.display = 'block';
+        hint.textContent = 'Tap to stop';
+      } else {
+        btn.style.background = '#1a1a1a';
+        micIcon.style.display = 'block';
+        stopIcon.style.display = 'none';
+        timer.style.display = 'none';
+        hint.textContent = 'Tap to record again';
+      }
+    }
+
+    // ── Timer ────────────────────────────────────────────────────
+    function startTimer() {
+      timerSeconds = 0;
+      updateTimerDisplay();
+      timerInterval = setInterval(() => {
+        timerSeconds++;
+        updateTimerDisplay();
+      }, 1000);
+    }
+
+    function stopTimer() {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+
+    function updateTimerDisplay() {
+      const m = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
+      const s = String(timerSeconds % 60).padStart(2, '0');
+      document.getElementById('record-timer').textContent = `${m}:${s}`;
+    }
+
+    // ── Audio playback bar ───────────────────────────────────────
+    function showAudioBar() {
+      const bar = document.getElementById('audio-bar');
+      bar.style.display = 'flex';
+      document.getElementById('playback-progress').style.width = '0%';
+      const dur = timerSeconds;
+      document.getElementById('playback-time').textContent = formatTime(dur);
+    }
+
+    function togglePlayback() {
+      if (!audioEl) return;
+      if (audioEl.paused) {
+        audioEl.play();
+        document.getElementById('play-icon').style.display = 'none';
+        document.getElementById('pause-icon').style.display = 'block';
+      } else {
+        audioEl.pause();
+        document.getElementById('play-icon').style.display = 'block';
+        document.getElementById('pause-icon').style.display = 'none';
+      }
+    }
+
+    function updatePlaybackProgress() {
+      if (!audioEl || !audioEl.duration) return;
+      const pct = (audioEl.currentTime / audioEl.duration) * 100;
+      document.getElementById('playback-progress').style.width = pct + '%';
+      document.getElementById('playback-time').textContent =
+        formatTime(Math.floor(audioEl.currentTime)) + ' / ' + formatTime(Math.floor(audioEl.duration));
+    }
+
+    function onPlaybackEnded() {
+      document.getElementById('play-icon').style.display = 'block';
+      document.getElementById('pause-icon').style.display = 'none';
+      document.getElementById('playback-progress').style.width = '0%';
+    }
+
+    function formatTime(secs) {
+      const m = Math.floor(secs / 60);
+      const s = String(secs % 60).padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    // ── Create button ────────────────────────────────────────────
+    function updateCreateBtn() {
+      const btn = document.getElementById('create-btn');
+      if (hasPhoto && hasRecording) {
+        btn.disabled = false;
+        btn.style.background = '#1a1a1a';
+        btn.style.cursor = 'pointer';
+      } else {
+        btn.disabled = true;
+        btn.style.background = '#d6d0c8';
+        btn.style.cursor = 'not-allowed';
+      }
+    }
+
+    function handleCreate() {
+      showScreen('processing-screen');
+    }
+  </script>
+</body>
+</html>
