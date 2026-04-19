@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Mic, Eye, FileText, Store, Loader2, Check, Shield } from "lucide-react"
+import { Mic, Eye, FileText, Store, Loader2, Check, Shield, AlertCircle, RefreshCw } from "lucide-react"
 import type { Language, ProductUpload, VoiceRecording } from "../voz-app"
 
 interface ProcessingScreenProps {
@@ -56,6 +56,8 @@ const content = {
       working: "Building your storefront...",
       done: "Store ready",
     },
+    errorMessage: "We couldn't create your store. Please try again.",
+    retryLabel: "Try Again",
   },
   es: {
     title: "Creando Tu Tienda",
@@ -90,6 +92,8 @@ const content = {
       working: "Construyendo tu tienda...",
       done: "Tienda lista",
     },
+    errorMessage: "No pudimos crear tu tienda. Por favor intenta de nuevo.",
+    retryLabel: "Intentar de Nuevo",
   },
 }
 
@@ -128,7 +132,6 @@ function ProgressArc({ progress }: { progress: number }) {
       className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] pointer-events-none z-0"
       viewBox="0 0 400 400"
     >
-      {/* Background arc */}
       <circle
         cx="200"
         cy="200"
@@ -137,7 +140,6 @@ function ProgressArc({ progress }: { progress: number }) {
         stroke="rgba(255,255,255,0.05)"
         strokeWidth={strokeWidth}
       />
-      {/* Progress arc */}
       <motion.circle
         cx="200"
         cy="200"
@@ -176,7 +178,6 @@ function CinematicTerminal({ logs, isVisible }: { logs: string[]; isVisible: boo
       animate={{ opacity: 1, y: 0 }}
       className="rounded-xl bg-[#0D0D0D] border border-[#2A2A2A] overflow-hidden shadow-2xl"
     >
-      {/* Terminal header */}
       <div className="px-4 py-2 bg-[#1A1A1A] border-b border-[#2A2A2A] flex items-center gap-2">
         <div className="w-3 h-3 rounded-full bg-[#FF5F56]" />
         <div className="w-3 h-3 rounded-full bg-[#FFBD2E]" />
@@ -184,7 +185,6 @@ function CinematicTerminal({ logs, isVisible }: { logs: string[]; isVisible: boo
         <span className="ml-3 text-xs text-white/40 font-mono">voz-agent-logs</span>
       </div>
 
-      {/* Terminal content */}
       <div ref={scrollRef} className="p-4 h-56 overflow-y-auto font-mono text-sm">
         <AnimatePresence>
           {logs.map((log, index) => (
@@ -196,8 +196,8 @@ function CinematicTerminal({ logs, isVisible }: { logs: string[]; isVisible: boo
               className="mb-1.5 flex"
             >
               <span className="text-[#C9A08A] mr-2 select-none">{">"}</span>
-              <TypewriterText 
-                text={log} 
+              <TypewriterText
+                text={log}
                 color={
                   log.includes("✓") || log.includes("complete") || log.includes("success")
                     ? "#4ADE80"
@@ -209,7 +209,6 @@ function CinematicTerminal({ logs, isVisible }: { logs: string[]; isVisible: boo
             </motion.div>
           ))}
         </AnimatePresence>
-        {/* Blinking cursor */}
         <motion.span
           animate={{ opacity: [1, 0, 1] }}
           transition={{ duration: 0.8, repeat: Infinity }}
@@ -241,8 +240,9 @@ function TypewriterText({ text, color }: { text: string; color: string }) {
   return <span style={{ color }}>{displayedText}</span>
 }
 
-export function ProcessingScreen({ language, onComplete }: ProcessingScreenProps) {
+export function ProcessingScreen({ language, products, voiceRecording, onComplete }: ProcessingScreenProps) {
   const t = content[language]
+
   const [agents, setAgents] = useState<AgentState>({
     voice: { status: "waiting", message: t.voice.waiting },
     vision: { status: "waiting", message: t.vision.waiting },
@@ -253,50 +253,165 @@ export function ProcessingScreen({ language, onComplete }: ProcessingScreenProps
   const [logs, setLogs] = useState<string[]>([])
   const [progress, setProgress] = useState(0)
   const [showLogs, setShowLogs] = useState(true)
+  const [hasError, setHasError] = useState(false)
+  const [retryKey, setRetryKey] = useState(0)
 
+  // Cross-closure communication refs
+  const apiResultRef = useRef<{ storefront_url: string } | null>(null)
+  const animEthicsDoneRef = useRef(false)
+  const storefrontTriggeredRef = useRef(false)
+  const mountedRef = useRef(true)
+
+  // Keep latest props accessible inside async callbacks without re-running the effect
+  const productsRef = useRef(products)
+  const voiceRecordingRef = useRef(voiceRecording)
+  const onCompleteRef = useRef(onComplete)
+  const tRef = useRef(t)
+  productsRef.current = products
+  voiceRecordingRef.current = voiceRecording
+  onCompleteRef.current = onComplete
+  tRef.current = t
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    const timeline = [
-      { delay: 500, agent: "voice", status: "working" as const, message: t.voice.working, progress: 10 },
-      { delay: 2000, agent: "voice", status: "done" as const, message: t.voice.done, progress: 20 },
-      { delay: 2500, agent: "vision", status: "working" as const, message: t.vision.working, progress: 30 },
-      { delay: 4500, agent: "vision", status: "done" as const, message: t.vision.done, progress: 45 },
-      { delay: 5000, agent: "listing", status: "working" as const, message: t.listing.working, progress: 55 },
-      { delay: 7000, agent: "listing", status: "done" as const, message: t.listing.done, progress: 65 },
-      { delay: 7500, agent: "ethics", status: "working" as const, message: t.ethics.working, progress: 75 },
-      { delay: 9000, agent: "ethics", status: "done" as const, message: t.ethics.done, progress: 85 },
-      { delay: 9500, agent: "storefront", status: "working" as const, message: t.storefront.working, progress: 92 },
-      { delay: 11500, agent: "storefront", status: "done" as const, message: t.storefront.done, progress: 100 },
-    ]
+    mountedRef.current = true
+    apiResultRef.current = null
+    animEthicsDoneRef.current = false
+    storefrontTriggeredRef.current = false
+
+    setAgents({
+      voice: { status: "waiting", message: tRef.current.voice.waiting },
+      vision: { status: "waiting", message: tRef.current.vision.waiting },
+      listing: { status: "waiting", message: tRef.current.listing.waiting },
+      ethics: { status: "waiting", message: tRef.current.ethics.waiting },
+      storefront: { status: "waiting", message: tRef.current.storefront.waiting },
+    })
+    setLogs([])
+    setProgress(0)
+    setHasError(false)
 
     const timeouts: NodeJS.Timeout[] = []
+    const controller = new AbortController()
 
-    timeline.forEach(({ delay, agent, status, message, progress: p }) => {
-      const timeout = setTimeout(() => {
-        setAgents((prev) => ({
-          ...prev,
-          [agent]: { status, message },
-        }))
+    // Called once API result is available AND ethics animation has completed
+    const triggerStorefront = (url: string) => {
+      if (!mountedRef.current || storefrontTriggeredRef.current) return
+      storefrontTriggeredRef.current = true
+
+      setAgents(prev => ({ ...prev, storefront: { status: "working", message: tRef.current.storefront.working } }))
+      setProgress(92)
+
+      timeouts.push(setTimeout(() => {
+        if (!mountedRef.current) return
+        setAgents(prev => ({ ...prev, storefront: { status: "done", message: tRef.current.storefront.done } }))
+        setProgress(100)
+
+        timeouts.push(setTimeout(() => {
+          if (!mountedRef.current) return
+          onCompleteRef.current(url)
+        }, 700))
+      }, 1500))
+    }
+
+    // Fixed-schedule card animations (voice → vision → listing → ethics)
+    const fixedSteps = [
+      { delay: 500,  agent: "voice",   status: "working" as const, msg: () => tRef.current.voice.working,   p: 10 },
+      { delay: 2000, agent: "voice",   status: "done"    as const, msg: () => tRef.current.voice.done,      p: 20 },
+      { delay: 2500, agent: "vision",  status: "working" as const, msg: () => tRef.current.vision.working,  p: 30 },
+      { delay: 4500, agent: "vision",  status: "done"    as const, msg: () => tRef.current.vision.done,     p: 45 },
+      { delay: 5000, agent: "listing", status: "working" as const, msg: () => tRef.current.listing.working, p: 55 },
+      { delay: 7000, agent: "listing", status: "done"    as const, msg: () => tRef.current.listing.done,    p: 65 },
+      { delay: 7500, agent: "ethics",  status: "working" as const, msg: () => tRef.current.ethics.working,  p: 75 },
+    ]
+
+    fixedSteps.forEach(({ delay, agent, status, msg, p }) => {
+      timeouts.push(setTimeout(() => {
+        if (!mountedRef.current) return
+        setAgents(prev => ({ ...prev, [agent]: { status, message: msg() } }))
         setProgress(p)
-      }, delay)
-      timeouts.push(timeout)
+      }, delay))
     })
 
-    // Streaming logs
+    // Ethics done is the sync point: if API already returned, proceed immediately;
+    // otherwise the API response handler will call triggerStorefront when it arrives.
+    timeouts.push(setTimeout(() => {
+      if (!mountedRef.current) return
+      setAgents(prev => ({ ...prev, ethics: { status: "done", message: tRef.current.ethics.done } }))
+      setProgress(85)
+      animEthicsDoneRef.current = true
+      if (apiResultRef.current) {
+        triggerStorefront(apiResultRef.current.storefront_url)
+      }
+    }, 9000))
+
+    // Streaming terminal logs (cosmetic, independent of API)
     streamingLogs.forEach((log, index) => {
-      const timeout = setTimeout(() => {
-        setLogs((prev) => [...prev, log])
-      }, 500 + index * 600)
-      timeouts.push(timeout)
+      timeouts.push(setTimeout(() => {
+        if (!mountedRef.current) return
+        setLogs(prev => [...prev, log])
+      }, 500 + index * 600))
     })
 
-    // Complete
-    const completeTimeout = setTimeout(() => {
-      onComplete(`https://voz.store/priya-handwoven`)
-    }, 12500)
-    timeouts.push(completeTimeout)
+    // 25-second hard timeout — aborts the in-flight fetch to trigger demo fallback
+    const apiAbortTimer = setTimeout(() => controller.abort(), 25000)
 
-    return () => timeouts.forEach(clearTimeout)
-  }, [t, onComplete])
+    const callApi = async () => {
+      try {
+        const formData = new FormData()
+        for (const product of productsRef.current) {
+          formData.append("images", product.file)
+        }
+        const blob = voiceRecordingRef.current.blob
+        if (blob) {
+          formData.append("audio", blob, "recording.webm")
+        }
+
+        const resp = await fetch("/api/process", {
+          method: "POST",
+          body: formData,
+          signal: controller.signal,
+        })
+        clearTimeout(apiAbortTimer)
+
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
+        const data = await resp.json()
+
+        if (!mountedRef.current) return
+        apiResultRef.current = data
+        if (animEthicsDoneRef.current) {
+          triggerStorefront(data.storefront_url)
+        }
+      } catch (err) {
+        clearTimeout(apiAbortTimer)
+        console.error("Process API failed, falling back to demo:", err)
+        if (!mountedRef.current) return
+
+        try {
+          const demoResp = await fetch("/api/demo")
+          if (!demoResp.ok) throw new Error("demo API failed")
+          const demoData = await demoResp.json()
+
+          if (!mountedRef.current) return
+          apiResultRef.current = demoData
+          if (animEthicsDoneRef.current) {
+            triggerStorefront(demoData.storefront_url)
+          }
+        } catch (demoErr) {
+          console.error("Demo fallback failed:", demoErr)
+          if (mountedRef.current) setHasError(true)
+        }
+      }
+    }
+
+    callApi()
+
+    return () => {
+      mountedRef.current = false
+      timeouts.forEach(clearTimeout)
+      clearTimeout(apiAbortTimer)
+      controller.abort()
+    }
+  }, [retryKey])
 
   const agentConfig = [
     { key: "voice" as const, icon: Mic, ...t.voice },
@@ -306,6 +421,32 @@ export function ProcessingScreen({ language, onComplete }: ProcessingScreenProps
     { key: "storefront" as const, icon: Store, ...t.storefront },
   ]
 
+  if (hasError) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="min-h-screen bg-[#1A1820] text-white flex flex-col items-center justify-center px-4 gap-6"
+      >
+        <AlertCircle className="w-16 h-16 text-[var(--terracotta)]" />
+        <div className="text-center">
+          <h2 className="font-serif text-2xl italic mb-2">Something went wrong</h2>
+          <p className="text-white/50">{t.errorMessage}</p>
+        </div>
+        <button
+          onClick={() => {
+            setHasError(false)
+            setRetryKey(k => k + 1)
+          }}
+          className="flex items-center gap-2 px-6 py-3 bg-[var(--terracotta)] text-white rounded-full font-medium hover:opacity-90 transition-opacity"
+        >
+          <RefreshCw className="w-5 h-5" />
+          {t.retryLabel}
+        </button>
+      </motion.div>
+    )
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -314,7 +455,7 @@ export function ProcessingScreen({ language, onComplete }: ProcessingScreenProps
       className="min-h-screen bg-[#1A1820] text-white px-4 py-8 relative overflow-hidden"
     >
       {/* Film grain overlay */}
-      <div 
+      <div
         className="fixed inset-0 pointer-events-none z-50 opacity-[0.03]"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
@@ -367,11 +508,11 @@ export function ProcessingScreen({ language, onComplete }: ProcessingScreenProps
                 key={key}
                 initial={{ y: 60, opacity: 0, scale: 0.9 }}
                 animate={{ y: 0, opacity: 1, scale: 1 }}
-                transition={{ 
+                transition={{
                   type: "spring",
                   stiffness: 300,
                   damping: 25,
-                  delay: index * 0.12 
+                  delay: index * 0.12,
                 }}
                 className={`relative overflow-hidden rounded-xl p-4 transition-all duration-500 ${
                   agent.status === "working"
