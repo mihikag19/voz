@@ -7,12 +7,18 @@ Source of truth for how frontend and backend communicate. Both Claude Code sessi
 Request: FormData
 - images: File[] (1-5 files, jpg/png/heic)
 - audio: Blob (webm or mp4, from MediaRecorder)
+- vendor_name: string (optional)
+- vendor_phone: string (optional)
 
 Response 200 (JSON):
 {
   "slug": "string",
   "storefront_url": "/storefront/{slug}",
-  "listing": {
+  "image_url": "string",
+  "image_urls": ["string"],
+  "voice_transcript": "string",
+  "language_detected": "string",
+  "listing_json": {
     "title": "string",
     "description": "string",
     "materials": ["string"],
@@ -23,19 +29,18 @@ Response 200 (JSON):
     "language_detected": "string",
     "confidence": 0.0
   },
-  "pricing": {
+  "pricing_json": {
     "price_low": 0,
     "price_recommended": 0,
     "price_high": 0,
     "currency": "USD",
     "reasoning": "string"
   },
-  "ethics": {
+  "ethics_approved": true,
+  "ethics_notes": {
     "status": "approve|revise|block",
     "issues": []
-  },
-  "photo_urls": ["string"],
-  "transcript_english": "string"
+  }
 }
 
 Response error (JSON): { "error": "string", "stage": "whisper|listing|pricing|storefront|ethics|save" }
@@ -46,9 +51,9 @@ Returns the same shape as /api/process 200 response, hardcoded. Frontend uses th
 
 ## GET /storefront/[slug]
 
-Renders the generated storefront page. Reads from Supabase `products` table by slug. Public, no auth.
+Renders the generated storefront page. Reads from Supabase products table by slug. Public, no auth.
 
-## POST /api/order (stretch goal — skip if time is short)
+## POST /api/order
 
 Request JSON: { product_slug, customer_name, customer_phone, quantity, message }
 Response: { success: true, order_id } or { error }
