@@ -46,6 +46,20 @@ function buildPricingContext(transcript: string): string {
   return `TRANSCRIPT (translated to English):\n${transcript}\n\nEstimate a fair retail price range for this handmade artisan product based on the transcript above.`;
 }
 
+const LANGUAGE_NAMES: Record<string, string> = {
+  en:"English",hi:"Hindi",es:"Spanish",fr:"French",pt:"Portuguese",ar:"Arabic",
+  zh:"Chinese",ja:"Japanese",ko:"Korean",de:"German",it:"Italian",ru:"Russian",
+  tr:"Turkish",vi:"Vietnamese",te:"Telugu",ta:"Tamil",bn:"Bengali",pa:"Punjabi",
+  mr:"Marathi",gu:"Gujarati",kn:"Kannada",ml:"Malayalam",or:"Odia",
+  sw:"Swahili",yo:"Yoruba",ig:"Igbo",ha:"Hausa",zu:"Zulu",am:"Amharic",
+  tl:"Filipino",ms:"Malay",id:"Indonesian",th:"Thai",fa:"Persian",he:"Hebrew",
+  pl:"Polish",cs:"Czech",hu:"Hungarian",ro:"Romanian",sr:"Serbian",el:"Greek",
+};
+
+function languageName(code: string): string {
+  return LANGUAGE_NAMES[code] ?? code.toUpperCase();
+}
+
 // ── Fallback HTML ──────────────────────────────────────────────────────────
 
 const FALLBACK_HTML = `<!DOCTYPE html>
@@ -95,6 +109,7 @@ export async function runPipeline(input: {
   photoUrls: string[];
   transcript: string;
   detectedLanguage: string;
+  vendorName?: string;
 }): Promise<{
   slug: string;
   listing: Record<string, unknown>;
@@ -106,7 +121,7 @@ export async function runPipeline(input: {
 
   // Stage 1: three agents in parallel
   const [listingRaw, pricingRaw, storefrontHtml] = await Promise.all([
-    runListingAgent(photoUrl, transcript).catch((e) => {
+    (runListingAgent(photoUrl, transcript) as Promise<string>).catch((e) => {
       console.error("Listing Agent failed", e);
       return "";
     }),
@@ -137,17 +152,34 @@ export async function runPipeline(input: {
     ? (listing.materials as string[]).join(", ")
     : String(listing.materials ?? "");
 
+  const vendorName = input.vendorName?.trim() || "the artisan";
+  const vendorInitial = vendorName[0]?.toUpperCase() ?? "A";
+  const priceNum = Number(pricing.price_recommended ?? 45);
+  const artisanAmount = `$${(priceNum * 0.88).toFixed(2)}`;
+  const shippingAmount = `$${(priceNum * 0.10).toFixed(2)}`;
+  const feeAmount = `$${(priceNum * 0.02).toFixed(2)}`;
+  const langName = languageName(detectedLanguage);
+  const category = escapeHtml(String(listing.category ?? "handmade"));
+  const technique = escapeHtml(String(listing.technique ?? "handcrafted"));
+
   const mergedHtml = storefrontHtml
     .replaceAll("{{TITLE}}", escapeHtml(String(listing.title ?? "")))
-    .replaceAll("{{PRICE}}", `$${pricing.price_recommended ?? 45}`)
+    .replaceAll("{{PRICE}}", `$${priceNum}`)
     .replaceAll("{{IMG_URL}}", photoUrl)
     .replaceAll("{{DESCRIPTION}}", escapeHtml(String(listing.description ?? "")))
     .replaceAll("{{MATERIALS}}", escapeHtml(materials))
-    .replaceAll(
-      "{{CULTURAL_CONTEXT}}",
-      escapeHtml(String(listing.cultural_context ?? ""))
-    )
-    .replaceAll("{{ORDER_FORM_ACTION}}", orderFormAction);
+    .replaceAll("{{CULTURAL_CONTEXT}}", escapeHtml(String(listing.cultural_context ?? "")))
+    .replaceAll("{{ORDER_FORM_ACTION}}", orderFormAction)
+    .replaceAll("{{SLUG}}", slug)
+    .replaceAll("{{VENDOR_NAME}}", escapeHtml(vendorName))
+    .replaceAll("{{VENDOR_INITIAL}}", vendorInitial)
+    .replaceAll("{{LANGUAGE_NAME}}", langName)
+    .replaceAll("{{TRANSCRIPT}}", escapeHtml(String(input.transcript ?? "")))
+    .replaceAll("{{CATEGORY}}", category)
+    .replaceAll("{{TECHNIQUE}}", technique)
+    .replaceAll("{{ARTISAN_AMOUNT}}", artisanAmount)
+    .replaceAll("{{SHIPPING_AMOUNT}}", shippingAmount)
+    .replaceAll("{{FEE_AMOUNT}}", feeAmount);
 
   // Stage 3: ethics review (sequential)
   const ethicsRaw = await runEthicsAgent({

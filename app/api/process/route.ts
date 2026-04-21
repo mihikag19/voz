@@ -94,6 +94,7 @@ export async function POST(request: NextRequest) {
       photoUrls: [photoUrl],
       transcript,
       detectedLanguage,
+      vendorName: vendorName ?? undefined,
     }));
   } catch (e) {
     console.error(`[process] pipeline failed after ${Date.now() - t1}ms (total ${Date.now() - t0}ms):`, e);
