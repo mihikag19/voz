@@ -39,14 +39,17 @@ export function DoneScreen({ language, storeUrl, onStartOver }: DoneScreenProps)
   const t = content[language]
   const [copied, setCopied] = useState(false)
 
+  // CROSS-LANE: Sonal reverting the demo-presentation hardcode (commits c2224be/8c40855)
+  // so the done screen uses the real per-store storeUrl prop again.
+  const absoluteUrl = storeUrl?.startsWith("http") ? storeUrl : `${window.location.origin}${storeUrl}`
+
   const handleCopy = async () => {
-    await navigator.clipboard.writeText("https://voz-theta.vercel.app/storefront/priya-warli-painting")
+    await navigator.clipboard.writeText(absoluteUrl)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
 
   const handleWhatsAppShare = () => {
-    const absoluteUrl = "https://voz-theta.vercel.app/storefront/priya-warli-painting"
     const message = encodeURIComponent(`Check out my store: ${absoluteUrl}`)
     window.open(`https://wa.me/?text=${message}`, "_blank")
   }
@@ -221,7 +224,7 @@ export function DoneScreen({ language, storeUrl, onStartOver }: DoneScreenProps)
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm text-muted-foreground mb-0.5">voz.store</p>
-              <p className="text-foreground font-medium truncate">voz.store/storefront/priya-warli-painting</p>
+              <p className="text-foreground font-medium truncate">{storeUrl.replace(/^https?:\/\//, "")}</p>
             </div>
             <RippleButton
               onClick={handleCopy}
@@ -245,7 +248,7 @@ export function DoneScreen({ language, storeUrl, onStartOver }: DoneScreenProps)
         className="relative z-20 w-full max-w-md space-y-3 mt-6"
       >
         <Link
-          href="/storefront/priya-warli-painting"
+          href={storeUrl || "/store"}
           className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-[var(--lavender-grey)] text-white font-serif text-lg italic hover:bg-[var(--lilac)] transition-colors relative overflow-hidden group"
         >
           <motion.div

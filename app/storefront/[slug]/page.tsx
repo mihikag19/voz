@@ -55,22 +55,11 @@ export default async function StorefrontPage({
 
   return (
     <>
-      <div
-        style={{
-          position: "fixed",
-          top: "0.75rem",
-          left: "1rem",
-          zIndex: 1000,
-          fontSize: "1.1rem",
-          fontWeight: "bold",
-          fontFamily: "Georgia, serif",
-          letterSpacing: "0.05em",
-        }}
-      >
-        <a href="/" style={{ textDecoration: "none", color: "#7a4528" }}>
-          Voz
-        </a>
-      </div>
+      <style>{`
+        .fair-bar .seg { overflow: hidden; white-space: nowrap; min-width: 0; }
+        .fair-bar .seg.b { font-size: 11px; padding: 0 8px; }
+        .fair-bar .seg.c { font-size: 0; }
+      `}</style>
 
       <div
         dangerouslySetInnerHTML={{ __html: product.storefront_html ?? "" }}

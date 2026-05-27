@@ -221,11 +221,12 @@
   }
   .fair-bar .seg{
     display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:500;letter-spacing:.04em;
+    overflow:hidden;white-space:nowrap;min-width:0;
     transition:flex-grow .3s;
   }
   .fair-bar .seg.a{background:var(--terracotta);flex:88}
-  .fair-bar .seg.b{background:var(--lavender-grey);flex:10}
-  .fair-bar .seg.c{background:var(--ink);flex:2}
+  .fair-bar .seg.b{background:var(--lavender-grey);flex:10;font-size:11px;padding:0 8px}
+  .fair-bar .seg.c{background:var(--ink);flex:2;font-size:0}
   .fair-legend{display:flex;gap:24px;justify-content:center;font-size:12px;color:var(--ink-mute);margin-top:10px;flex-wrap:wrap}
   .fair-legend .item{display:flex;align-items:center;gap:8px}
   .fair-legend .sw{width:10px;height:10px;border-radius:50%}
@@ -408,13 +409,13 @@
     </div>
     <div class="fair-bar">
       <div class="seg a">88% · {{ARTISAN_AMOUNT}} <span style="opacity:.7;margin-left:6px">to {{VENDOR_NAME}}</span></div>
-      <div class="seg b">10% · {{SHIPPING_AMOUNT}}</div>
-      <div class="seg c">2% · {{FEE_AMOUNT}}</div>
+      <div class="seg b">10%</div>
+      <div class="seg c"></div>
     </div>
     <div class="fair-legend">
       <div class="item"><span class="sw" style="background:var(--terracotta)"></span> {{VENDOR_NAME}} receives <strong style="color:var(--ink);margin-left:4px">{{ARTISAN_AMOUNT}}</strong></div>
-      <div class="item"><span class="sw" style="background:var(--lavender-grey)"></span> Shipping & packaging</div>
-      <div class="item"><span class="sw" style="background:var(--ink)"></span> Voz platform fee</div>
+      <div class="item"><span class="sw" style="background:var(--lavender-grey)"></span> Shipping & packaging <strong style="color:var(--ink);margin-left:4px">{{SHIPPING_AMOUNT}}</strong></div>
+      <div class="item"><span class="sw" style="background:var(--ink)"></span> Voz platform fee <strong style="color:var(--ink);margin-left:4px">{{FEE_AMOUNT}}</strong></div>
     </div>
     <p class="fair-copy">No middlemen, no export agents, no reseller margin. The 2% we take covers translation, hosting, and the handwritten card. <em>If {{VENDOR_NAME}} wanted to close their storefront tomorrow, the link is theirs to take.</em></p>
   </div>
