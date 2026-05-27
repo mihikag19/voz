@@ -1,4 +1,4 @@
-const WHISPER_TIMEOUT_MS = 30_000;
+const WHISPER_TIMEOUT_MS = 8_000;
 
 export async function transcribeAndTranslate(audioBlob: Blob): Promise<{
   transcriptEnglish: string;

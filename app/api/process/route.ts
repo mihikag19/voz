@@ -3,8 +3,6 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { transcribeAndTranslate } from "@/lib/whisper";
 import { runPipeline } from "@/lib/pipeline";
 
-export const maxDuration = 60;
-
 export async function POST(request: NextRequest) {
   const t0 = Date.now();
   // Stage 1: parse + validate

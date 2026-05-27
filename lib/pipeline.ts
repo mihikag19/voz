@@ -1,7 +1,7 @@
 import { runListingAgent, LISTING_FALLBACK } from "./agents/listing";
 import { runPricingAgent, PRICING_FALLBACK } from "./agents/pricing";
 import { runStorefrontAgent } from "./agents/storefront";
-import { runEthicsAgent, ETHICS_FALLBACK } from "./agents/ethics";
+import { ETHICS_FALLBACK } from "./agents/ethics";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -185,21 +185,8 @@ export async function runPipeline(input: {
     .replaceAll("{{VOICE_URL}}", input.voiceUrl ?? "")
     .replaceAll("{{IMAGE_COUNT}}", String(input.imageCount ?? 1));
 
-  // Stage 3: ethics review (sequential)
-  const ethicsRaw = await runEthicsAgent({
-    listing,
-    pricing,
-    transcript,
-    slug,
-  }).catch((e) => {
-    console.error("Ethics Agent failed", e);
-    return "";
-  });
-
-  const ethics = parseJSONSafely<{ status: string; issues: unknown[] }>(
-    ethicsRaw,
-    ETHICS_FALLBACK
-  );
+  // Ethics review skipped on blocking path (Vercel Hobby 10s limit)
+  const ethics = ETHICS_FALLBACK;
 
   return { slug, listing, pricing, ethics, mergedHtml };
 }
