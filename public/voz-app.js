@@ -806,7 +806,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const slug = data.slug || "priya-warli-painting";
     const storeUrl = data.storefront_url || ("/storefront/" + slug);
     const fullUrl = window.location.origin + storeUrl;
-    const displayUrl = "voz.shop/" + slug;
+    const displayUrl = window.location.host + storeUrl;
 
     const urlEl = document.getElementById("urlText");
     if(urlEl){ urlEl.textContent = displayUrl; urlEl.dataset.fullUrl = fullUrl; }

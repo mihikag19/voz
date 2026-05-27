@@ -1,5 +1,5 @@
 const CLAUDE_TIMEOUT_MS = 45_000;
-const CLAUDE_MODEL = "claude-sonnet-4-6";
+const CLAUDE_MODEL = "claude-opus-4-7";
 
 type TextPart = { type: "text"; text: string };
 type ImagePart = { type: "image"; source: { type: "url"; url: string } };
