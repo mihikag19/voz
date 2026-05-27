@@ -39,11 +39,15 @@ export async function POST(request: NextRequest) {
   const image = imageFiles[0];
   const ext = (image.name?.split(".").pop() || "jpg").toLowerCase();
   const filename = `${crypto.randomUUID()}.${ext}`;
+  const audioFilename = `${crypto.randomUUID()}.webm`;
 
-  const [uploadSettled, transcribeSettled] = await Promise.allSettled([
+  const [uploadSettled, audioUploadSettled, transcribeSettled] = await Promise.allSettled([
     supabaseAdmin.storage
       .from("product-photos")
       .upload(filename, image, { contentType: image.type, upsert: false }),
+    supabaseAdmin.storage
+      .from("product-photos")
+      .upload(audioFilename, audio, { contentType: "audio/webm", upsert: false }),
     transcribeAndTranslate(audio),
   ]);
 
@@ -62,6 +66,19 @@ export async function POST(request: NextRequest) {
       { error: uploadSettled.value.error.message, stage: "upload" },
       { status: 500 }
     );
+  }
+
+  // Audio upload is best-effort — don't fail the pipeline if it errors
+  let voiceUrl: string | undefined;
+  if (audioUploadSettled.status === "fulfilled" && !audioUploadSettled.value.error) {
+    const { data: audioPublicData } = supabaseAdmin.storage
+      .from("product-photos")
+      .getPublicUrl(audioFilename);
+    voiceUrl = audioPublicData.publicUrl;
+  } else {
+    console.warn("Audio upload failed (non-fatal):", audioUploadSettled.status === "rejected"
+      ? audioUploadSettled.reason
+      : audioUploadSettled.value.error);
   }
 
   if (transcribeSettled.status === "rejected") {
@@ -95,6 +112,8 @@ export async function POST(request: NextRequest) {
       transcript,
       detectedLanguage,
       vendorName: vendorName ?? undefined,
+      voiceUrl,
+      imageCount: imageFiles.length,
     }));
   } catch (e) {
     console.error(`[process] pipeline failed after ${Date.now() - t1}ms (total ${Date.now() - t0}ms):`, e);
@@ -115,6 +134,7 @@ export async function POST(request: NextRequest) {
     vendor_phone: vendorPhone,
     image_url: photoUrl,
     image_urls: [photoUrl],
+    voice_url: voiceUrl ?? null,
     voice_transcript: transcript,
     language_detected: detectedLanguage,
     listing_json: listing,

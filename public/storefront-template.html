@@ -161,7 +161,7 @@
   .buy-btn{
     background:var(--ink);color:#fff;font-family:"Cormorant Garamond";font-style:italic;font-size:20px;
     padding:18px 28px;border-radius:100px;width:100%;display:flex;align-items:center;justify-content:center;gap:10px;
-    transition:all .25s;margin-bottom:10px;
+    transition:all .25s;margin-bottom:10px;text-decoration:none;
   }
   .buy-btn:hover{background:var(--terracotta)}
   .buy-note{font-size:12px;color:var(--ink-mute);text-align:center}
@@ -319,7 +319,7 @@
   <div class="hero-media">
     <img class="hero-img" src="{{IMG_URL}}" alt="{{TITLE}}" />
     <div class="hero-photo-chip" style="z-index:4"><span class="px"></span> Photographed by artisan</div>
-    <div class="hero-thumbs">
+    <div class="hero-thumbs" id="heroThumbs">
       <div class="t active">01</div>
       <div class="t">02</div>
       <div class="t">03</div>
@@ -353,9 +353,9 @@
       <div class="price">{{PRICE}}</div>
       <div class="price-tag">Fair-trade tier</div>
     </div>
-    <button class="buy-btn" onclick="document.getElementById('orderForm').scrollIntoView({behavior:'smooth'})">Buy from {{VENDOR_NAME}}
+    <a class="buy-btn" id="buyBtn" href="#" target="_blank" rel="noopener noreferrer">Buy from {{VENDOR_NAME}}
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-    </button>
+    </a>
     <div class="buy-note">Made by hand <span class="heart">·</span> Shipped with care <span class="heart">·</span> Handwritten card included</div>
   </div>
 </section>
@@ -524,6 +524,8 @@
   </div>
 </footer>
 
+<audio id="playerAudio" src="{{VOICE_URL}}" preload="metadata" style="display:none"></audio>
+
 <script>
   /* ---- Waves player ---- */
   const waves = document.getElementById("waves");
@@ -546,39 +548,26 @@
   });
 
   /* ---- Play / scrub ---- */
-  const DURATION = 102; // 1:42
   const playBtn = document.getElementById("playBtn");
   const playIcon = document.getElementById("playIcon");
   const timeTxt = document.getElementById("timeTxt");
-  let playing = false, t = 0, lastTs = 0, raf = null;
+  const audio = document.getElementById("playerAudio");
 
   function fmt(s){
-    s = Math.max(0, Math.min(DURATION, s));
+    s = Math.max(0, isFinite(s) ? s : 0);
     const m = Math.floor(s/60);
     const ss = Math.floor(s%60).toString().padStart(2,"0");
     return `${m}:${ss}`;
   }
-  function render(){
-    const pct = t/DURATION;
+  function fmtDur(){ return audio.duration && isFinite(audio.duration) ? fmt(audio.duration) : "0:00"; }
+  function renderWave(){
+    const pct = (audio.duration && isFinite(audio.duration)) ? audio.currentTime/audio.duration : 0;
     const upto = Math.floor(pct * BARS);
-    [...waves.children].forEach((b,i) => {
-      b.classList.toggle("played", i <= upto);
-    });
-    timeTxt.textContent = `${fmt(t)} / 1:42`;
-  }
-  function step(ts){
-    if(!lastTs) lastTs = ts;
-    const dt = (ts - lastTs) / 1000;
-    lastTs = ts;
-    if(playing){
-      t += dt;
-      if(t >= DURATION){ t = DURATION; playing = false; setIcon(); }
-      render();
-    }
-    raf = requestAnimationFrame(step);
+    [...waves.children].forEach((b,i) => b.classList.toggle("played", i <= upto));
+    timeTxt.textContent = `${fmt(audio.currentTime)} / ${fmtDur()}`;
   }
   function setIcon(){
-    if(playing){
+    if(!audio.paused){
       playIcon.innerHTML = '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>';
       playBtn.classList.add("playing");
     } else {
@@ -586,20 +575,22 @@
       playBtn.classList.remove("playing");
     }
   }
+  audio.addEventListener("timeupdate", renderWave);
+  audio.addEventListener("ended", () => { setIcon(); renderWave(); });
+  audio.addEventListener("loadedmetadata", () => { timeTxt.textContent = `0:00 / ${fmtDur()}`; });
   playBtn.addEventListener("click", () => {
-    if(t >= DURATION) t = 0;
-    playing = !playing;
-    lastTs = 0;
+    if(audio.ended) audio.currentTime = 0;
+    audio.paused ? audio.play() : audio.pause();
     setIcon();
   });
   waves.addEventListener("click", e => {
+    if(!isFinite(audio.duration)) return;
     const rect = waves.getBoundingClientRect();
     const pct = Math.max(0, Math.min(1, (e.clientX - rect.left)/rect.width));
-    t = pct * DURATION;
-    render();
+    audio.currentTime = pct * audio.duration;
+    renderWave();
   });
-  render();
-  requestAnimationFrame(step);
+  renderWave();
 
   /* ---- Language pill (respects homepage choice) ---- */
   try {
@@ -614,6 +605,23 @@
     try { localStorage.removeItem("vozLanguage"); } catch(e) {}
     location.href = "/";
   });
+
+  /* ---- WhatsApp buy link ---- */
+  (function(){
+    const PHONE = "15107149990";
+    const title = "{{TITLE}}";
+    const price = "{{PRICE}}";
+    const msg = encodeURIComponent(
+      `Hi! I'm interested in your "${title}" from your Voz storefront (${price}). Could you tell me more? Link: ${window.location.href}`
+    );
+    document.getElementById("buyBtn").href = `https://wa.me/${PHONE}?text=${msg}`;
+  })();
+
+  /* ---- Hide carousel pills when single image ---- */
+  if({{IMAGE_COUNT}} <= 1){
+    const ht = document.getElementById("heroThumbs");
+    if(ht) ht.style.display = "none";
+  }
 
   /* ---- Thumb cycling (pure UI, simulates gallery) ---- */
   const hero = document.querySelector(".hero-media");

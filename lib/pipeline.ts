@@ -110,6 +110,8 @@ export async function runPipeline(input: {
   transcript: string;
   detectedLanguage: string;
   vendorName?: string;
+  voiceUrl?: string;
+  imageCount?: number;
 }): Promise<{
   slug: string;
   listing: Record<string, unknown>;
@@ -179,7 +181,9 @@ export async function runPipeline(input: {
     .replaceAll("{{TECHNIQUE}}", technique)
     .replaceAll("{{ARTISAN_AMOUNT}}", artisanAmount)
     .replaceAll("{{SHIPPING_AMOUNT}}", shippingAmount)
-    .replaceAll("{{FEE_AMOUNT}}", feeAmount);
+    .replaceAll("{{FEE_AMOUNT}}", feeAmount)
+    .replaceAll("{{VOICE_URL}}", input.voiceUrl ?? "")
+    .replaceAll("{{IMAGE_COUNT}}", String(input.imageCount ?? 1));
 
   // Stage 3: ethics review (sequential)
   const ethicsRaw = await runEthicsAgent({

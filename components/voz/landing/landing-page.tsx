@@ -1,358 +1,146 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
-import { motion, useMotionValue, useSpring, AnimatePresence } from "framer-motion"
-import { Mic, Camera, Sparkles, Globe, ArrowRight, Check } from "lucide-react"
+import { motion } from "framer-motion"
+import { ArrowRight, Camera, Mic, Sparkles } from "lucide-react"
 import { AnimatedBackground } from "../ui/animated-background"
-import { AnimatedLogo } from "../ui/animated-logo"
 
 interface LandingPageProps {
   onGetStarted: () => void
 }
 
-const features = [
+const steps = [
   {
+    num: "01",
     icon: Camera,
-    title: "Upload Photos",
-    description: "Snap or upload images of your handcrafted products"
+    title: "Photograph",
+    desc: "Snap your work — any phone camera works.",
   },
   {
+    num: "02",
     icon: Mic,
-    title: "Tell Your Story",
-    description: "Record your voice to share the tradition behind your craft"
+    title: "Speak",
+    desc: "Describe your craft in your own language. We understand.",
   },
   {
+    num: "03",
     icon: Sparkles,
-    title: "AI Creates Your Store",
-    description: "Watch as AI transforms your uploads into a beautiful storefront"
+    title: "Your storefront goes live",
+    desc: "A real store, shareable by WhatsApp, in minutes.",
   },
-  {
-    icon: Globe,
-    title: "Reach 47 Countries",
-    description: "Your store is automatically translated and ready for the world"
-  }
-]
-
-const testimonials = [
-  {
-    quote: "I went from selling at the local market to shipping worldwide in one afternoon.",
-    name: "Priya Sharma",
-    craft: "Warli Painter, Maharashtra"
-  },
-  {
-    quote: "Voz understood my story better than I could have written it myself.",
-    name: "Carmen Reyes",
-    craft: "Textile Weaver, Oaxaca"
-  }
 ]
 
 export function LandingPage({ onGetStarted }: LandingPageProps) {
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
-  const containerRef = useRef<HTMLDivElement>(null)
-  
-  const cursorX = useMotionValue(0)
-  const cursorY = useMotionValue(0)
-  const springX = useSpring(cursorX, { damping: 25, stiffness: 200 })
-  const springY = useSpring(cursorY, { damping: 25, stiffness: 200 })
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      cursorX.set(e.clientX)
-      cursorY.set(e.clientY)
-      setMousePosition({ x: e.clientX, y: e.clientY })
-    }
-    window.addEventListener("mousemove", handleMouseMove)
-    return () => window.removeEventListener("mousemove", handleMouseMove)
-  }, [cursorX, cursorY])
-
   return (
-    <div ref={containerRef} className="min-h-screen bg-[var(--cream)] relative overflow-x-hidden">
-      {/* Animated background with gradient mesh and bokeh */}
+    <div className="min-h-screen bg-[var(--cream)] relative overflow-x-hidden">
       <AnimatedBackground variant="warm" />
-      
-      {/* Cursor glow effect */}
-      <motion.div
-        className="fixed w-64 h-64 pointer-events-none z-0 hidden md:block"
-        style={{
-          x: springX,
-          y: springY,
-          translateX: "-50%",
-          translateY: "-50%",
-          background: "radial-gradient(circle, rgba(201, 160, 138, 0.15) 0%, transparent 70%)",
-          filter: "blur(40px)",
-        }}
-      />
 
-      {/* Hero Section */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center px-6 py-20">
+      {/* Hero */}
+      <section className="relative min-h-screen flex flex-col items-center justify-center px-6 py-20 text-center">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="text-center max-w-4xl mx-auto"
+          className="max-w-3xl mx-auto"
         >
-          {/* Animated Logo */}
-          <div className="mb-8">
-            <AnimatedLogo size="lg" />
-          </div>
+          {/* Wordmark */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6 }}
+            className="font-serif font-medium text-[var(--foreground)] text-2xl md:text-3xl tracking-[0.18em] uppercase mb-16"
+          >
+            Voz
+          </motion.div>
 
-          {/* Tagline */}
+          {/* Headline */}
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.8 }}
+            className="font-serif text-6xl md:text-8xl text-[var(--foreground)] leading-[1.0] tracking-tight mb-8"
+          >
+            Your <em>voice</em>.
+            <br />
+            Your store.
+          </motion.h1>
+
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 1.2, duration: 0.6 }}
-            className="text-xl md:text-2xl text-[var(--muted-foreground)] mb-4 font-serif italic"
+            transition={{ delay: 0.5, duration: 0.6 }}
+            className="text-lg md:text-xl text-[var(--muted-foreground)] mb-12 max-w-md mx-auto leading-relaxed"
           >
-            Your Store, In Your Voice
+            Take a photo. Speak your story.
+            <br />
+            Your storefront is live in minutes.
           </motion.p>
 
-          {/* Subtitle */}
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.4, duration: 0.6 }}
-            className="text-base md:text-lg text-[var(--muted-foreground)] mb-12 max-w-2xl mx-auto leading-relaxed"
-          >
-            Create a professional storefront in minutes using just your voice and photos. 
-            No writing. No design skills. Just your craft and your story.
-          </motion.p>
-
-          {/* CTA Button */}
           <motion.button
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 1.6, duration: 0.4 }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.98 }}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7, duration: 0.4 }}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
             onClick={onGetStarted}
-            className="group relative px-8 py-4 bg-[var(--lavender-grey)] text-white rounded-full font-medium text-lg shadow-lg hover:shadow-xl transition-shadow overflow-hidden"
+            className="group inline-flex items-center gap-3 px-8 py-4 bg-[var(--lavender-grey)] text-white rounded-full font-medium text-lg hover:bg-[var(--lilac)] transition-colors"
           >
-            {/* Shimmer effect */}
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-              animate={{ x: ["-100%", "100%"] }}
-              transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
-            />
-            <span className="relative flex items-center gap-2">
-              Get Started Free
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </span>
+            Create your store
+            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </motion.button>
 
-          {/* Trust badge */}
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 1.8, duration: 0.6 }}
-            className="mt-6 text-sm text-[var(--muted-foreground)]"
+            transition={{ delay: 1.0, duration: 0.6 }}
+            className="mt-8 text-sm text-[var(--muted-foreground)] italic"
           >
-            Trusted by 2,000+ artisans worldwide
+            We speak South Asian and Latin American languages, African languages, and many more.
           </motion.p>
-        </motion.div>
-
-        {/* Scroll indicator */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 2.2, duration: 0.6 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
-        >
-          <motion.div
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-            className="w-6 h-10 rounded-full border-2 border-[var(--lavender)] flex items-start justify-center p-1"
-          >
-            <motion.div className="w-1.5 h-3 bg-[var(--lavender-grey)] rounded-full" />
-          </motion.div>
         </motion.div>
       </section>
 
-      {/* How It Works Section */}
-      <section className="relative py-24 px-6">
-        <div className="max-w-5xl mx-auto">
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.6 }}
-            className="text-3xl md:text-4xl font-serif text-center text-[var(--foreground)] mb-16"
+      {/* How it works */}
+      <section className="relative py-20 px-6 border-t border-[var(--lavender-light)]">
+        <div className="max-w-4xl mx-auto">
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="text-xs tracking-widest uppercase text-[var(--muted-foreground)] text-center mb-16"
           >
-            How It Works
-          </motion.h2>
+            How it works
+          </motion.p>
 
-          <div className="grid md:grid-cols-2 gap-8">
-            {features.map((feature, index) => (
+          <div className="grid md:grid-cols-3 gap-10 md:gap-16">
+            {steps.map((step, i) => (
               <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 30 }}
+                key={step.num}
+                initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-50px" }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                whileHover={{ y: -4 }}
-                className="group relative bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-[var(--lavender-light)] hover:border-[var(--lavender)] transition-colors"
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.12, duration: 0.5 }}
+                className="flex flex-col items-center md:items-start text-center md:text-left"
               >
-                {/* Step number */}
-                <div className="absolute -top-3 -left-3 w-8 h-8 bg-[var(--lavender-grey)] text-white rounded-full flex items-center justify-center text-sm font-medium">
-                  {index + 1}
+                <div className="w-11 h-11 rounded-full bg-[var(--lavender-light)] flex items-center justify-center mb-5">
+                  <step.icon className="w-5 h-5 text-[var(--lavender-grey)]" />
                 </div>
-                
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-[var(--lavender-light)] flex items-center justify-center shrink-0 group-hover:bg-[var(--lavender)] transition-colors">
-                    <feature.icon className="w-6 h-6 text-[var(--lavender-grey)]" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-medium text-[var(--foreground)] mb-1">
-                      {feature.title}
-                    </h3>
-                    <p className="text-[var(--muted-foreground)] text-sm leading-relaxed">
-                      {feature.description}
-                    </p>
-                  </div>
-                </div>
+                <p className="font-serif text-5xl text-[var(--lavender-light)] leading-none mb-3">
+                  {step.num}
+                </p>
+                <h3 className="font-serif text-xl text-[var(--foreground)] mb-2">{step.title}</h3>
+                <p className="text-sm text-[var(--muted-foreground)] leading-relaxed">{step.desc}</p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section className="relative py-24 px-6 bg-gradient-to-b from-transparent to-[var(--lavender-light)]/30">
-        <div className="max-w-4xl mx-auto">
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.6 }}
-            className="text-3xl md:text-4xl font-serif text-center text-[var(--foreground)] mb-16"
-          >
-            Artisan Stories
-          </motion.h2>
-
-          <div className="grid md:grid-cols-2 gap-8">
-            {testimonials.map((testimonial, index) => (
-              <motion.blockquote
-                key={testimonial.name}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-50px" }}
-                transition={{ duration: 0.5, delay: index * 0.15 }}
-                className="relative bg-white rounded-2xl p-8 shadow-sm border border-[var(--lavender-light)]"
-              >
-                {/* Quote mark */}
-                <div className="absolute -top-4 left-6 text-6xl text-[var(--lavender)] font-serif leading-none">
-                  &ldquo;
-                </div>
-                
-                <p className="text-[var(--foreground)] text-lg leading-relaxed mb-6 font-serif italic">
-                  {testimonial.quote}
-                </p>
-                
-                <footer className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[var(--lavender-light)] flex items-center justify-center">
-                    <span className="text-sm font-medium text-[var(--lavender-grey)]">
-                      {testimonial.name.charAt(0)}
-                    </span>
-                  </div>
-                  <div>
-                    <cite className="not-italic font-medium text-[var(--foreground)]">
-                      {testimonial.name}
-                    </cite>
-                    <p className="text-sm text-[var(--muted-foreground)]">
-                      {testimonial.craft}
-                    </p>
-                  </div>
-                </footer>
-              </motion.blockquote>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Features List Section */}
-      <section className="relative py-24 px-6">
-        <div className="max-w-3xl mx-auto text-center">
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.6 }}
-            className="text-3xl md:text-4xl font-serif text-[var(--foreground)] mb-8"
-          >
-            Everything You Need
-          </motion.h2>
-
-          <motion.ul
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="grid sm:grid-cols-2 gap-4 text-left max-w-xl mx-auto"
-          >
-            {[
-              "Voice-to-text product descriptions",
-              "AI-powered image enhancement",
-              "47 language translations",
-              "Ethics & authenticity verification",
-              "WhatsApp order integration",
-              "Mobile-first storefront",
-              "No monthly fees",
-              "SSL security included"
-            ].map((feature, index) => (
-              <motion.li
-                key={feature}
-                initial={{ opacity: 0, x: -10 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.3 + index * 0.05 }}
-                className="flex items-center gap-3 text-[var(--foreground)]"
-              >
-                <Check className="w-5 h-5 text-[var(--success)] shrink-0" />
-                <span>{feature}</span>
-              </motion.li>
-            ))}
-          </motion.ul>
-        </div>
-      </section>
-
-      {/* Final CTA Section */}
-      <section className="relative py-24 px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.6 }}
-          className="max-w-2xl mx-auto text-center"
-        >
-          <h2 className="text-3xl md:text-4xl font-serif text-[var(--foreground)] mb-4">
-            Ready to Share Your Craft?
-          </h2>
-          <p className="text-[var(--muted-foreground)] mb-8 text-lg">
-            Join thousands of artisans who have already launched their stores with Voz.
-          </p>
-          
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={onGetStarted}
-            className="group px-10 py-5 bg-[var(--lavender-grey)] text-white rounded-full font-medium text-xl shadow-lg hover:shadow-xl transition-shadow"
-          >
-            <span className="flex items-center gap-3">
-              Create Your Store
-              <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
-            </span>
-          </motion.button>
-        </motion.div>
-      </section>
-
       {/* Footer */}
-      <footer className="relative py-12 px-6 border-t border-[var(--lavender-light)]">
-        <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="font-serif text-2xl italic text-[var(--lavender-grey)]">
-            Voz
-          </div>
-          <p className="text-sm text-[var(--muted-foreground)]">
-            &copy; 2024 Voz. Empowering artisans worldwide.
-          </p>
+      <footer className="relative py-8 px-6 border-t border-[var(--lavender-light)]">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <span className="font-serif font-medium text-[var(--foreground)] text-sm tracking-[0.18em] uppercase">Voz</span>
+          <p className="text-xs text-[var(--muted-foreground)]">Made by hand. Shipped with care.</p>
         </div>
       </footer>
     </div>

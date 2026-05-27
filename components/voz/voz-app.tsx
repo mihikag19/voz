@@ -28,7 +28,7 @@ export interface VoiceRecording {
 type Screen = "landing" | "welcome" | "upload" | "processing" | "done"
 
 export function VozApp() {
-  const [currentScreen, setCurrentScreen] = useState<Screen>("landing")
+  const [currentScreen, setCurrentScreen] = useState<Screen>("welcome")
   const [language, setLanguage] = useState<Language>("en")
   const [fullLanguage, setFullLanguage] = useState<LanguageOption | null>(null)
   const [products, setProducts] = useState<ProductUpload[]>([])
@@ -37,13 +37,15 @@ export function VozApp() {
   const [showLanguageSelector, setShowLanguageSelector] = useState(false)
 
   const handleGetStarted = () => {
-    setCurrentScreen("welcome")
+    setCurrentScreen("upload")
   }
 
   const handleLanguageSelect = (lang: Language, fullLang: LanguageOption) => {
     setLanguage(lang)
     setFullLanguage(fullLang)
-    setCurrentScreen("upload")
+    if (!showLanguageSelector) {
+      setCurrentScreen("landing")
+    }
     setShowLanguageSelector(false)
   }
 
@@ -62,7 +64,7 @@ export function VozApp() {
     setProducts([])
     setVoiceRecording({ blob: null, duration: 0 })
     setStoreUrl("")
-    setCurrentScreen("landing")
+    setCurrentScreen("welcome")
   }
 
   const handleReopenLanguageSelector = () => {
